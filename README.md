@@ -26,7 +26,7 @@
 
 [3/21/2024] The repository is created.
 
-[**Installation**](#installation) | [**Usage**](#usage) | [**Pretrained Models**](#pretrained-models) | [**Training VLMs**](#training-vlms) | [**License**](#license)
+[**Installation**](#installation) | [**Usage**](#usage) | [**PCT Pipeline**](#pct-pipeline) | [**Pretrained Models**](#pretrained-models) | [**Training VLMs**](#training-vlms) | [**License**](#license)
 ---
 
 ## Installation
@@ -97,6 +97,16 @@ generated_text = vlm.generate(
 ```
 
 For a complete terminal-based CLI for interacting with our VLMs, check out [scripts/generate.py](scripts/generate.py). 
+
+## PCT Pipeline
+
+For percentile clipping (PCT) calibration and quantizer overrides, see [docs/pct_pipeline.md](docs/pct_pipeline.md). The document covers:
+
+- CLI recipes for running `cobra.pipeline.pct_collect` and `cobra.pipeline.pct_apply`
+- The four canonical hook targets (`vision.siglip`, `vision.dino`, `llm`, `projector`)
+- Recommended calibration batch sizes, subsampling safeguards, and default output paths
+- Troubleshooting tips for common hook/percentile issues
+- How to inject the resulting `(lo, hi)` ranges into activation quantizers via `apply_pct_overrides_to_quantizers`
 
 ---
 

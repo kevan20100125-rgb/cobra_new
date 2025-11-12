@@ -7,10 +7,15 @@ IDs, mappings to paper experiments, and short descriptions), as well as for load
 import json
 import os
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
+import torch
 from huggingface_hub import hf_hub_download
+from torch import nn
+from torch.utils.hooks import RemovableHandle
 
+from cobra.quantize.pct import PercentileAccumulator, TARGETS, resolve_hooks
+from cobra.pipeline.pct_schema import normalize_stage
 from cobra.models.materialize import get_llm_backbone_and_tokenizer, get_vision_backbone_and_transform
 from cobra.models.registry import GLOBAL_REGISTRY, MODEL_REGISTRY
 from cobra.models.vlms import CobraVLM
@@ -105,3 +110,85 @@ def load(
     )
 
     return vlm
+
+
+_SUBSAMPLE_LIMIT = 2_000_000
+
+
+def attach_pct_observers(
+    model: nn.Module,
+    acc: PercentileAccumulator,
+    targets: Optional[Iterable[str]] = None,
+) -> List[RemovableHandle]:
+    """
+    Attach forward hooks to canonical percentile targets and stream activations
+    into `acc`. Returns the list of hook handles so callers can remove them.
+    """
+
+    def _extract_tensor(obj: object) -> Optional[torch.Tensor]:
+        if torch.is_tensor(obj):
+            return obj
+        if isinstance(obj, (list, tuple)):
+            for item in obj:
+                t = _extract_tensor(item)
+                if t is not None:
+                    return t
+        if isinstance(obj, dict):
+            for item in obj.values():
+                t = _extract_tensor(item)
+                if t is not None:
+                    return t
+        return None
+
+    raw_targets = list(targets or TARGETS)
+    selected: List[str] = []
+    for name in raw_targets:
+        try:
+            stage = normalize_stage(name)
+        except Exception as exc:
+            overwatch.warning(f"[pct] skipping unknown target '{name}': {exc}")
+            continue
+        if stage not in selected:
+            selected.append(stage)
+    if not selected:
+        selected = list(TARGETS)
+
+    resolved_raw = resolve_hooks(model)
+    resolved: Dict[str, nn.Module] = {}
+    for key, module in resolved_raw.items():
+        try:
+            stage = normalize_stage(key)
+        except Exception:
+            continue
+        resolved[stage] = module
+    missing = [k for k in selected if k not in resolved]
+    if missing:
+        raise RuntimeError(f"attach_pct_observers: unresolved targets {missing}")
+
+    handles: List[RemovableHandle] = []
+    for key in selected:
+        module = resolved[key]
+
+        def _hook(_module: nn.Module, _inputs, output, *, bucket: str = key) -> None:
+            tensor = _extract_tensor(output)
+            if tensor is None:
+                overwatch.warning(f"[pct] hook '{bucket}' produced no tensor output; skipping")
+                return
+            tensor = tensor.detach()
+            flat = tensor.reshape(-1)
+            if flat.numel() > _SUBSAMPLE_LIMIT:
+                idx = torch.randint(0, flat.numel(), (_SUBSAMPLE_LIMIT,), device=flat.device)
+                tensor = flat[idx]
+            else:
+                tensor = flat
+
+            try:
+                acc.record_activation(tensor, bucket=bucket)
+            except Exception as exc:
+                overwatch.warning(f"[pct] record_activation failed for '{bucket}': {exc}")
+
+        handle = module.register_forward_hook(_hook)
+        handles.append(handle)
+        overwatch.info(f"[pct] attached observer -> {key} ({module.__class__.__name__})")
+
+    return handles

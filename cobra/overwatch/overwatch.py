@@ -6,6 +6,8 @@ Utility class for creating a centralized/standardized logger (built on Rich) and
 import logging
 import logging.config
 import os
+import time
+from contextlib import contextmanager
 from logging import LoggerAdapter
 from typing import Any, Callable, ClassVar, Dict, MutableMapping, Tuple, Union
 
@@ -42,7 +44,26 @@ class ContextAdapter(LoggerAdapter):
         return f"{self.CTX_PREFIXES[ctx_level]}{msg}", kwargs
 
 
-class DistributedOverwatch:
+class _ScopedLoggerMixin:
+    def __init__(self, logger: ContextAdapter) -> None:
+        self._scope_depth = 0
+        self._scoped_logger = logger
+
+    @contextmanager
+    def scoped(self, message: str) -> Any:
+        level = self._scope_depth
+        self._scoped_logger.info(f"{message} (start)", ctx_level=level)
+        self._scope_depth += 1
+        start = time.time()
+        try:
+            yield
+        finally:
+            self._scope_depth = max(0, self._scope_depth - 1)
+            duration = time.time() - start
+            self._scoped_logger.info(f"{message} (done in {duration:.2f}s, depth={level})", ctx_level=level)
+
+
+class DistributedOverwatch(_ScopedLoggerMixin):
     def __init__(self, name: str) -> None:
         """Initializer for an Overwatch object that wraps logging & `accelerate.PartialState`."""
         from accelerate import PartialState
@@ -50,6 +71,7 @@ class DistributedOverwatch:
         # Note that PartialState is always safe to initialize regardless of `accelerate launch` or `torchrun`
         #   =>> However, might be worth actually figuring out if we need the `accelerate` dependency at all!
         self.logger, self.distributed_state = ContextAdapter(logging.getLogger(name), extra={}), PartialState()
+        super().__init__(self.logger)
 
         # Logger Delegation (for convenience; would be nice to just compose & dynamic dispatch eventually)
         self.debug = self.logger.debug
@@ -74,10 +96,11 @@ class DistributedOverwatch:
         return self.distributed_state.num_processes
 
 
-class PureOverwatch:
+class PureOverwatch(_ScopedLoggerMixin):
     def __init__(self, name: str) -> None:
         """Initializer for an Overwatch object that just wraps logging."""
         self.logger = ContextAdapter(logging.getLogger(name), extra={})
+        super().__init__(self.logger)
 
         # Logger Delegation (for convenience; would be nice to just compose & dynamic dispatch eventually)
         self.debug = self.logger.debug
@@ -111,3 +134,22 @@ class PureOverwatch:
 
 def initialize_overwatch(name: str) -> Union[DistributedOverwatch, PureOverwatch]:
     return DistributedOverwatch(name) if int(os.environ.get("WORLD_SIZE", -1)) != -1 else PureOverwatch(name)
+
+
+def finalize_summary(manifest: Dict[str, Any], verify_report: Dict[str, Any]) -> str:
+    """
+    Produce a compact textual summary after finalize/export step.
+    """
+    items = manifest.get("items", [])
+    lines = [
+        f"[Finalize] modules={len(items)}",
+        f"[Finalize] verify_status={verify_report.get('status')}",
+        f"[Finalize] verify_batches={verify_report.get('batches', 0)} "
+        f"max_mae={verify_report.get('max_mae', 0):.4f} max_rel={verify_report.get('max_rel', 0):.4f}",
+    ]
+    violations = verify_report.get("violations") or []
+    if violations:
+        lines.append("[Finalize] top layer deviations:")
+        for mae, name in violations[:5]:
+            lines.append(f"  - {name}: MAE={mae:.4f}")
+    return "\n".join(lines)

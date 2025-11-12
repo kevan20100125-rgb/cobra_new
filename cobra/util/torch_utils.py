@@ -16,6 +16,7 @@ Terminology
     -> Rank :: Integer index of current process in the total world size
     -> Local Rank :: Local index on given node in [0, Devices per Node]
 """
+import logging
 import os
 import random
 from typing import Callable, Optional
@@ -92,3 +93,25 @@ def check_bloat16_supported() -> bool:
 
     except Exception:
         return False
+
+
+# === Logging ===
+
+
+def get_logger(name: str) -> logging.Logger:
+    """
+    Return a module-specific logger with uniform formatting.
+    """
+    logger = logging.getLogger(name)
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            logging.Formatter(
+                fmt="%(asctime)s | %(levelname)5s | %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+        )
+        logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+    return logger

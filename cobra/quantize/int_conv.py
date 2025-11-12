@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .percentile_io import load_overrides
-from quantize.quantizer import (
+from .quantizer import (
     UniformAffineQuantizer,
     attach_overrides_if_any,
     finalize_quant_params,

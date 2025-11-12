@@ -1,21 +1,15 @@
 import torch
 from torch import nn
 import typing
-from quantize.int_linear import QuantLinear
+from .int_linear import QuantLinear
 
 def fuse_mamband_layer_norms(model):
-   
     layers = model.layers
     for layer in layers:  
         with torch.no_grad(): 
             norm = layer.norm
             ln_in = layer.mixer.in_proj
             ln_out= layer.mixer.out_proj
-            
-            
-            
-            
-            
             layer.norm.weight.fill_(1.)
 
 def fuse_layer_norms(model):

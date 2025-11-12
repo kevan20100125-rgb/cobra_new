@@ -3,7 +3,7 @@ import os
 import sys
 from typing import Optional, Tuple
 
-from cobra.quantize.utils import RotationSpec
+from .utils import RotationSpec
 sys.path.append(os.getcwd())
 sys.path.append(os.path.dirname(os.getcwd()))
 

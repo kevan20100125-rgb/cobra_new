@@ -1,7 +1,8 @@
 from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal, Optional, Tuple, Union, Sequence, Dict, Any, Mapping
+from functools import lru_cache
+from typing import Literal, Optional, Tuple, Union, Sequence, Dict, Any, Mapping, TYPE_CHECKING, Type
 
 import copy
 import logging
@@ -13,9 +14,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from .int_conv import QuantConv1d,QuantConv2d,QuantConv3d
-from .int_linear import QuantLinear
-from .int_matmul import QuantMatMul
+if TYPE_CHECKING:  # pragma: no cover
+    from .int_conv import QuantConv1d, QuantConv2d, QuantConv3d
+    from .int_linear import QuantLinear
+    from .int_matmul import QuantMatMul
 from .normalized_modules import flatten_conv_weight, restore_conv_weight
 from .quantizer import UniformAffineQuantizer
 
@@ -233,9 +235,31 @@ def eligible_module(m: nn.Module) -> bool:
     return isinstance(m, (nn.Linear, nn.Conv1d, nn.Conv2d, nn.Conv3d))
 
 
+@lru_cache(None)
+def _quant_conv_types() -> Tuple[Type[nn.Module], ...]:
+    from cobra.quantize.int_conv import QuantConv1d, QuantConv2d, QuantConv3d
+
+    return QuantConv1d, QuantConv2d, QuantConv3d
+
+
+@lru_cache(None)
+def _quant_linear_type() -> Type[nn.Module]:
+    from cobra.quantize.int_linear import QuantLinear
+
+    return QuantLinear
+
+
+@lru_cache(None)
+def _quant_matmul_type() -> Type[nn.Module]:
+    from cobra.quantize.int_matmul import QuantMatMul
+
+    return QuantMatMul
+
+
 def is_quant_eligible(m: nn.Module) -> bool:
     """Return True if module is a quantized Linear/Conv/MatMul wrapper."""
-    return isinstance(m, (QuantLinear, QuantConv1d, QuantConv2d, QuantConv3d, QuantMatMul))
+    quant_types = _quant_conv_types() + (_quant_linear_type(), _quant_matmul_type())
+    return isinstance(m, quant_types)
 
 
 def snapshot_weights(modules: Sequence[nn.Module]) -> Dict[str, torch.Tensor]:
@@ -461,8 +485,9 @@ def set_quant_state(self, weight_quant: bool = False, act_quant: bool = False):
     # setting weight quantization here does not affect actual forward pass
     self.use_weight_quant = weight_quant
     self.use_act_quant = act_quant
+    quant_types = _quant_conv_types() + (_quant_linear_type(), _quant_matmul_type())
     for name,m in self.named_modules():
-        if isinstance(m, (QuantLinear, QuantMatMul,QuantConv1d,QuantConv2d)):
+        if isinstance(m, quant_types):
             m.set_quant_state(weight_quant, act_quant)
 
 def set_static_quant(self, static_quant: bool = False):
@@ -483,3 +508,4 @@ def set_observing(self, observing: bool = True):
     for name, m in self.named_modules():
         if isinstance(m, (UniformAffineQuantizer)):
            m.is_observing = observing
+

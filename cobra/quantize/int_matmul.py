@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from quantize.quantizer import UniformAffineQuantizer, finalize_quant_params
+from .quantizer import UniformAffineQuantizer, finalize_quant_params
 from .utils import FinalizeSpec
 from .int_others import pack_4bit_tensor, unpack_4bit_tensor
 

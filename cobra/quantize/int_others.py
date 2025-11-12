@@ -1,5 +1,5 @@
 import torch,torch.nn as nn,torch.nn.functional as F
-from quantize.quantizer import UniformAffineQuantizer
+from .quantizer import UniformAffineQuantizer
 
 
 def pack_4bit_tensor(values: torch.Tensor) -> torch.Tensor:

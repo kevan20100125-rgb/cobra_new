@@ -1,0 +1,98 @@
+[Step 1] Collect activation percentiles for: vision.siglip,vision.dino,llm,projector
+11/12 [23:14:22] INFO     | >> [*] Downloading `cobra+3b from HF Hub  load.py:66
+11/12 [23:14:23] INFO     | >> [*] Found Config =>> Loading &         load.py:78
+                          Freezing cobra+3b with:                               
+                                       Vision Backbone =>>                      
+                          dinosiglip-vit-so-384px                               
+                                       LLM Backbone    =>>                      
+                          mamba-2.8b-zephyr                                     
+                                       Arch Specifier  =>>                      
+                          no-align+fused-gelu-mlp                               
+                                       Checkpoint Path =>>                      
+                          `/home/asdf1234/.cache/huggingface/hub/mode           
+                          ls--han1997--cobra/snapshots/7e3fb02b4f9291           
+                          f6dcc0e9143ada0e5d7239372d/cobra+3b/checkpo           
+                          ints/latest-checkpoint.pt`                            
+                 INFO     | >> [*] Loading Vision Backbone            load.py:87
+                          dinosiglip-vit-so-384px                               
+11/12 [23:14:26] INFO     | >> Loading pretrained weights from   _builder.py:186
+                          Hugging Face hub                                      
+                          (timm/vit_large_patch14_reg4_dinov2.lv                
+                          d142m)                                                
+                 INFO     | >>  Safe alternative available for       _hub.py:180
+                          'pytorch_model.bin' (as                               
+                          'model.safetensors'). Loading weights                 
+                          using safetensors.                                    
+                 INFO     | >> Resized position embedding: (37,  pos_embed.py:55
+                          37) to (27, 27).                                      
+11/12 [23:14:30] INFO     | >> Loading pretrained weights from   _builder.py:186
+                          Hugging Face hub                                      
+                          (('timm/ViT-SO400M-14-SigLIP-384',                    
+                          'open_clip_pytorch_model.bin'))                       
+                 INFO     | >>  Safe alternative available for       _hub.py:180
+                          'open_clip_pytorch_model.bin' (as                     
+                          'open_clip_model.safetensors'). Loading               
+                          weights using safetensors.                            
+                 INFO     | >> [*] Loading Pretrained LLM             load.py:94
+                          mamba-2.8b-zephyr via HF Transformers                 
+                 INFO     | >>     |=> Building empty mamba LLM  base_llm.py:129
+                          from `xiuyul/mamba-2.8b-zephyr`                       
+11/12 [23:14:52] INFO     | >>     |=> Loading mamba (Fast)      base_llm.py:151
+                          Tokenizer via the AutoTokenizer API                   
+11/12 [23:14:53] INFO     | >> [*] Loading VLM cobra+3b from         load.py:103
+                          Checkpoint; Freezing Weights 🥶                       
+11/12 [23:15:00] INFO     | >>  attached -> vision.siglip @   pct_collect.py:293
+                          vision_backbone.siglip_featurizer.b                   
+                          locks.0.attn.qkv                                      
+                 INFO     | >>  attached -> vision.dino @     pct_collect.py:293
+                          vision_backbone.dino_featurizer.blo                   
+                          cks.0.attn.qkv                                        
+                 INFO     | >>  attached -> llm @             pct_collect.py:293
+                          llm_backbone.llm.backbone.embedding                   
+                 INFO     | >>  attached -> projector @       pct_collect.py:293
+                          projector.projector.0                                 
+11/12 [23:15:02] INFO     | >>  batch 1/16 collected; acc     pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >>  batch 2/16 collected; acc     pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >>  batch 3/16 collected; acc     pct_collect.py:315
+                          keys=['llm']                                          
+11/12 [23:15:03] INFO     | >>  batch 4/16 collected; acc     pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >>  batch 5/16 collected; acc     pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >>  batch 6/16 collected; acc     pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >>  batch 7/16 collected; acc     pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >>  batch 8/16 collected; acc     pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >>  batch 9/16 collected; acc     pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >>  batch 10/16 collected; acc    pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >>  batch 11/16 collected; acc    pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >>  batch 12/16 collected; acc    pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >>  batch 13/16 collected; acc    pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >>  batch 14/16 collected; acc    pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >>  batch 15/16 collected; acc    pct_collect.py:315
+                          keys=['llm']                                          
+11/12 [23:15:04] INFO     | >>  batch 16/16 collected; acc    pct_collect.py:315
+                          keys=['llm']                                          
+                 INFO     | >> [PctCollect] vision.siglip     pct_collect.py:329
+                          samples=0 p99=n/a p99.9=n/a                           
+                          p99.99=n/a min=0.0000 max=0.0000                      
+                 INFO     | >> [PctCollect] vision.dino       pct_collect.py:329
+                          samples=0 p99=n/a p99.9=n/a                           
+                          p99.99=n/a min=0.0000 max=0.0000                      
+                 INFO     | >> [PctCollect] llm               pct_collect.py:329
+                          samples=163840 p99=0.2360                             
+                          p99.9=0.3428 p99.99=0.9853                            
+                          min=-1.4538 max=2.2704                                
+                 INFO     | >> [PctCollect] projector         pct_collect.py:329
+                          samples=0 p99=n/a p99.9=n/a                           
+                          p99.99=n/a min=0.0000 max=0.0000                      

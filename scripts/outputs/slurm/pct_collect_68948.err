@@ -1,0 +1,22 @@
+-----------------
+loading CUDA 12.4
+-----------------
+
+Traceback (most recent call last):
+  File "/work/asdf1234/miniconda3/envs/cobra/lib/python3.10/runpy.py", line 187, in _run_module_as_main
+    mod_name, mod_spec, code = _get_module_details(mod_name, _Error)
+  File "/work/asdf1234/miniconda3/envs/cobra/lib/python3.10/runpy.py", line 110, in _get_module_details
+    __import__(pkg_name)
+  File "/work/asdf1234/cobra_new/cobra/__init__.py", line 1, in <module>
+    from .models import available_model_names, available_models, get_model_description, load
+  File "/work/asdf1234/cobra_new/cobra/models/__init__.py", line 1, in <module>
+    from .load import available_model_names, available_models, get_model_description, load
+  File "/work/asdf1234/cobra_new/cobra/models/load.py", line 17, in <module>
+    from cobra.quantize.pct import PercentileAccumulator, TARGETS, resolve_hooks
+  File "/work/asdf1234/cobra_new/cobra/quantize/__init__.py", line 1, in <module>
+    from .int_conv import *
+  File "/work/asdf1234/cobra_new/cobra/quantize/int_conv.py", line 12, in <module>
+    from .utils import FinalizeSpec
+  File "/work/asdf1234/cobra_new/cobra/quantize/utils.py", line 16, in <module>
+    from .int_conv import QuantConv1d,QuantConv2d,QuantConv3d
+ImportError: cannot import name 'QuantConv1d' from partially initialized module 'cobra.quantize.int_conv' (most likely due to a circular import) (/work/asdf1234/cobra_new/cobra/quantize/int_conv.py)
